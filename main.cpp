@@ -4,13 +4,15 @@
 #include "NBodySimulation.h"
 #include "IO.h"
 
-int main(int argc, char** argv) {
-    if (argc != 2) {
+int main(int argc, char **argv)
+{
+    if (argc != 2)
+    {
         std::cerr << "Usage: " << argv[0] << " input_file.txt\n";
         return 1;
     }
     NBodySimulation nbs(argv[1]);
-    
+
     // Write initial snapshot
     openPVDFile();
     int snapshotCounter = 0;
@@ -21,25 +23,46 @@ int main(int argc, char** argv) {
     double t = 0.0;
     double nextPlotTime = nbs.tPlotDelta;
 
-   int N = (int)nbs.bodies.size();
+    int N = (int)nbs.pos_x.size();
 
-    while (t < nbs.tFinal) {
-        std::vector<double> forceX(N, 0.0);
-        std::vector<double> forceY(N, 0.0);
-        std::vector<double> forceZ(N, 0.0);
+    // Allocate force arrays
+    std::vector<double> forceX(N, 0.0);
+    std::vector<double> forceY(N, 0.0);
+    std::vector<double> forceZ(N, 0.0);
+
+    while (t < nbs.tFinal)
+    {
+        // The reading of the input and writing of the output in IO.cpp may need to be modified if the data structures are
+        // Do not modify the input or output file format. It must remain the same! - Think I have already done that. Make sure to check
+        t += nbs.dt;
+
+        // Set force arrays to zero
+        std::fill(forceX.begin(), forceX.end(), 0.0);
+        std::fill(forceY.begin(), forceY.end(), 0.0);
+        std::fill(forceZ.begin(), forceZ.end(), 0.0);
 
         // Compute gravitational forces
-        for (int i = 0; i < N; ++i) {
-            for (int j = i + 1; j < N; ++j) {
-                double dx = nbs.bodies[j].x[0] - nbs.bodies[i].x[0];
-                double dy = nbs.bodies[j].x[1] - nbs.bodies[i].x[1];
-                double dz = nbs.bodies[j].x[2] - nbs.bodies[i].x[2];
+        for (int i = 0; i < N; ++i)
+        {
+            // Load body i data once
+            double xi = nbs.pos_x[i];
+            double yi = nbs.pos_y[i];
+            double zi = nbs.pos_z[i];
+            double mi = nbs.mass[i];
 
-                double distSqr = dx*dx + dy*dy + dz*dz;
-                double dist = std::sqrt(distSqr);
-                double distCubed = distSqr * dist;
+            for (int j = i + 1; j < N; ++j)
+            {
+                double dx = nbs.pos_x[j] - xi;
+                double dy = nbs.pos_y[j] - yi;
+                double dz = nbs.pos_z[j] - zi;
 
-                double F = (nbs.bodies[i].mass * nbs.bodies[j].mass) / distCubed;
+                double distSqr = dx * dx + dy * dy + dz * dz;
+
+                // Inverse square root
+                double invDist = 1.0 / std::sqrt(distSqr);
+                double invDist3 = invDist * invDist * invDist;
+
+                double F = (mi * nbs.mass[j]) * invDist3;
 
                 forceX[i] += F * dx;
                 forceY[i] += F * dy;
@@ -52,17 +75,18 @@ int main(int argc, char** argv) {
         }
 
         // Update velocities and positions
-        for (int i = 0; i < N; ++i) {
-            nbs.bodies[i].v[0] += nbs.dt * forceX[i] / nbs.bodies[i].mass;
-            nbs.bodies[i].v[1] += nbs.dt * forceY[i] / nbs.bodies[i].mass;
-            nbs.bodies[i].v[2] += nbs.dt * forceZ[i] / nbs.bodies[i].mass;
+        for (int i = 0; i < N; ++i)
+        {
+            double invMass = nbs.dt / nbs.mass[i];
 
-            nbs.bodies[i].x[0] += nbs.dt * nbs.bodies[i].v[0];
-            nbs.bodies[i].x[1] += nbs.dt * nbs.bodies[i].v[1];
-            nbs.bodies[i].x[2] += nbs.dt * nbs.bodies[i].v[2];
+            nbs.vel_x[i] += invMass * forceX[i];
+            nbs.vel_y[i] += invMass * forceY[i];
+            nbs.vel_z[i] += invMass * forceZ[i];
+
+            nbs.pos_x[i] += nbs.dt * nbs.vel_x[i];
+            nbs.pos_y[i] += nbs.dt * nbs.vel_y[i];
+            nbs.pos_z[i] += nbs.dt * nbs.vel_z[i];
         }
-
-        t += nbs.dt;
 
         if (t >= nextPlotTime) {
             snapshotCounter++;
@@ -77,4 +101,3 @@ int main(int argc, char** argv) {
 
     return 0;
 }
-

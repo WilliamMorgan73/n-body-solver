@@ -17,14 +17,14 @@ void writeVTKSnapshot(NBodySimulation nbs, int snapshotNumber) {
     out << "<PolyData>\n";
     // If you modify the data structures containing bodies, this line
     // needs to be modified
-    out << " <Piece NumberOfPoints=\"" << nbs.bodies.size() << "\">\n";
+    out << " <Piece NumberOfPoints=\"" << nbs.pos_x.size() << "\">\n";
     out << "  <Points>\n";
     out << "   <DataArray type=\"Float64\" NumberOfComponents=\"3\" format=\"ascii\">";
 
     // If you modify the data structures containing bodies, this for loop 
     // needs to be modified
-    for (const auto& b : nbs.bodies) {
-        out << b.x[0] << " " << b.x[1] << " " << b.x[2] << " ";
+    for (size_t i = 0; i < nbs.pos_x.size(); ++i) {
+        out << nbs.pos_x[i] << " " << nbs.pos_y[i] << " " << nbs.pos_z[i] << " ";
     }
 
     out << "</DataArray>\n";
