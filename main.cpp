@@ -30,6 +30,9 @@ int main(int argc, char **argv)
     std::vector<double> forceY(N, 0.0);
     std::vector<double> forceZ(N, 0.0);
 
+    // Collision Constant
+    const double C = 1e-2 / (double)N; // Need to tweak the tolerance in order to avoid missing collisions
+
     while (t < nbs.tFinal)
     {
         // The reading of the input and writing of the output in IO.cpp may need to be modified if the data structures are
@@ -88,7 +91,69 @@ int main(int argc, char **argv)
             nbs.pos_z[i] += nbs.dt * nbs.vel_z[i];
         }
 
-        if (t >= nextPlotTime) {
+        // Handle collisions
+        for (int i = 0; i < N; ++i)
+        {
+            for (int j = i + 1; j < N; ++j)
+            {
+                double dx = nbs.pos_x[j] - nbs.pos_x[i];
+                double dy = nbs.pos_y[j] - nbs.pos_y[i];
+                double dz = nbs.pos_z[j] - nbs.pos_z[i];
+
+                double dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+
+                if (dist <= C * (nbs.mass[i] + nbs.mass[j]))
+                {
+                    // Calculate new mass
+                    double newMass = nbs.mass[i] + nbs.mass[j];
+
+                    // Calculate Merged Position (Center of Mass)
+                    nbs.pos_x[i] = (nbs.mass[i] * nbs.pos_x[i] + nbs.mass[j] * nbs.pos_x[j]) / newMass;
+                    nbs.pos_y[i] = (nbs.mass[i] * nbs.pos_y[i] + nbs.mass[j] * nbs.pos_y[j]) / newMass;
+                    nbs.pos_z[i] = (nbs.mass[i] * nbs.pos_z[i] + nbs.mass[j] * nbs.pos_z[j]) / newMass;
+
+                    // Calculate Merged Velocity (Conservation of Momentum)
+                    nbs.vel_x[i] = (nbs.mass[i] * nbs.vel_x[i] + nbs.mass[j] * nbs.vel_x[j]) / newMass;
+                    nbs.vel_y[i] = (nbs.mass[i] * nbs.vel_y[i] + nbs.mass[j] * nbs.vel_y[j]) / newMass;
+                    nbs.vel_z[i] = (nbs.mass[i] * nbs.vel_z[i] + nbs.mass[j] * nbs.vel_z[j]) / newMass;
+
+                    // Update mass
+                    nbs.mass[i] = newMass;
+
+                    // Remove body j by swapping with the last body
+
+                    int last = N - 1;
+                    ;
+
+                    nbs.pos_x[j] = nbs.pos_x[last];
+                    nbs.pos_y[j] = nbs.pos_y[last];
+                    nbs.pos_z[j] = nbs.pos_z[last];
+                    nbs.mass[j] = nbs.mass[last];
+                    nbs.vel_x[j] = nbs.vel_x[last];
+                    nbs.vel_y[j] = nbs.vel_y[last];
+                    nbs.vel_z[j] = nbs.vel_z[last];
+
+                    // Remove the last body
+                    nbs.pos_x.pop_back();
+                    nbs.pos_y.pop_back();
+                    nbs.pos_z.pop_back();
+                    nbs.mass.pop_back();
+                    nbs.vel_x.pop_back();
+                    nbs.vel_y.pop_back();
+                    nbs.vel_z.pop_back();
+
+                    // Decrease N
+                    N--;
+                }
+                else
+                {
+                    // No collision
+                    continue;
+                }
+            }
+        }
+        if (t >= nextPlotTime)
+        {
             snapshotCounter++;
             writeVTKSnapshot(nbs, snapshotCounter);
             addSnapshotToPVD(snapshotCounter);
