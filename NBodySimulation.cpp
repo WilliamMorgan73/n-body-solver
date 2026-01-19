@@ -1,39 +1,60 @@
 #include "NBodySimulation.h"
-#include <fstream>
 #include <iostream>
+#include <fstream>
 #include <stdexcept>
 
-// Constructor that reads the input file
-NBodySimulation::NBodySimulation(const char* inputFile) {
-    std::ifstream infile(inputFile);
-    if (!infile.is_open()) {
-        throw std::runtime_error("Error: Could not open input file.");
-    }
-
-    // Read the simulation parameters (Line 1)
-    // Format: dt final_time snapshot_interval
-    if (!(infile >> dt >> tFinal >> tPlotDelta)) {
-         throw std::runtime_error("Error: Failed to read simulation parameters.");
-    }
-
-    // Read particles (Subsequent lines)
-    // Format: x y z vx vy vz mass
-    while (infile) {
-        double rx, ry, rz, vx, vy, vz, m;
-        // Try to read the next 7 numbers
-        if (infile >> rx >> ry >> rz >> vx >> vy >> vz >> m) {
-            Body b;
-            b.x[0] = rx; b.x[1] = ry; b.x[2] = rz;
-            b.v[0] = vx; b.v[1] = vy; b.v[2] = vz;
-            b.mass = m;
-            bodies.push_back(b);
-        }
-    }
-
-    infile.close();
+// Default Constructor
+NBodySimulation::NBodySimulation() 
+    : tPlotDelta(0.1), tFinal(1.0), dt(0.01), bodies() { // Adjusted defaults
     
-    // Safety check
-    if (bodies.empty()) {
-        std::cerr << "Warning: No bodies were loaded from the file!\n";
+    // Simple 3-body setup for testing
+    Body b;
+    // Body 1
+    b.x[0] = 0.0; b.x[1] = 0.0; b.x[2] = 0.0;
+    b.v[0] = 1.0; b.v[1] = 0.0; b.v[2] = 0.0;
+    b.mass = 1.0;
+    bodies.push_back(b);
+
+    // Body 2
+    b.x[0] = 1.0; b.x[1] = 0.0; b.x[2] = 0.0;
+    b.v[0] = 0.0; b.v[1] = 1.0; b.v[2] = 0.0;
+    b.mass = 1.0;
+    bodies.push_back(b);
+
+    // Body 3
+    b.x[0] = -1.0; b.x[1] = 0.0; b.x[2] = 0.0;
+    b.v[0] = 0.0; b.v[1] = -1.0; b.v[2] = 0.0;
+    b.mass = 1.0;
+    bodies.push_back(b);
+}
+
+// File Loading Constructor
+NBodySimulation::NBodySimulation(const std::string& filename)
+    : tPlotDelta(0.0), tFinal(0.0), dt(0.0), bodies() {
+    
+    std::ifstream infile(filename);
+    if (!infile) {
+        std::cerr << "Error: Cannot open input file: " << filename << "\n";
+        exit(1); // Stop execution if file not found
     }
+
+    // CORRECTED ORDER according to PDF 
+    // 1. Time Step (dt)
+    // 2. Final Time (tFinal)
+    // 3. Snapshot Interval (tPlotDelta)
+    if (!(infile >> dt >> tFinal >> tPlotDelta)) {
+         std::cerr << "Error: Failed to read simulation parameters.\n";
+         exit(1);
+    }
+
+    Body b;
+    // Loop to read all particles
+    while (infile >> b.x[0] >> b.x[1] >> b.x[2]
+                  >> b.v[0] >> b.v[1] >> b.v[2]
+                  >> b.mass) {
+        bodies.push_back(b);
+    }
+    
+    std::cout << "Loaded " << bodies.size() << " bodies from " << filename << "\n";
+    std::cout << "dt=" << dt << ", tFinal=" << tFinal << ", plotDelta=" << tPlotDelta << "\n";
 }
