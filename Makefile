@@ -21,3 +21,5 @@ clean:
 
 .PHONY: all clean
 
+# For windows:
+# g++ -O3 -std=c++17 model_solution.cpp NBodySimulation.cpp IO.cpp -o NBodySolver.exe
