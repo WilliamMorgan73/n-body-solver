@@ -4,21 +4,28 @@
 #include <vector>
 #include <string>
 
-struct Body {
-    double x[3];
-    double v[3];
-    double mass;
-};
-
 class NBodySimulation {
 public:
     double tPlotDelta;
     double tFinal;
     double dt;
-    std::vector<Body> bodies;
 
-    // Declarations only
-    NBodySimulation();
+    // SoA: Separate vectors for each component
+    // This replaces std::vector<Body> bodies;
+    std::vector<double> pos_x;
+    std::vector<double> pos_y;
+    std::vector<double> pos_z;
+
+    std::vector<double> vel_x;
+    std::vector<double> vel_y;
+    std::vector<double> vel_z;
+
+    std::vector<double> mass;
+
+    // Helper function to get the number of particles
+    size_t getN() const { return pos_x.size(); }
+
+    // Constructor declaration
     explicit NBodySimulation(const std::string& filename);
 };
 
