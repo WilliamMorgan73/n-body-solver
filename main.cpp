@@ -31,12 +31,10 @@ int main(int argc, char **argv)
     std::vector<double> forceZ(N, 0.0);
 
     // Collision Constant
-    const double C = 1e-2 / (double)N; // Need to tweak the tolerance in order to avoid missing collisions
+    const double C = 1e-2 / (double)N; 
 
     while (t < nbs.tFinal)
     {
-        // The reading of the input and writing of the output in IO.cpp may need to be modified if the data structures are
-        // Do not modify the input or output file format. It must remain the same! - Think I have already done that. Make sure to check
         t += nbs.dt;
 
         // Set force arrays to zero
@@ -123,7 +121,6 @@ int main(int argc, char **argv)
                     // Remove body j by swapping with the last body
 
                     int last = N - 1;
-                    ;
 
                     nbs.pos_x[j] = nbs.pos_x[last];
                     nbs.pos_y[j] = nbs.pos_y[last];
@@ -144,6 +141,8 @@ int main(int argc, char **argv)
 
                     // Decrease N
                     N--;
+                    // Decrement j to account for removed body
+                    j--;
                 }
                 else
                 {

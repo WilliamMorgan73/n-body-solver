@@ -10,13 +10,13 @@ NBodySimulation::NBodySimulation(const std::string& filename)
     std::ifstream infile(filename);
     if (!infile) {
         std::cerr << "Error: Cannot open input file: " << filename << "\n";
-        exit(1); // Stop execution if file not found
+        exit(1);
     }
 
     // Read simulation parameters
     if (!(infile >> dt >> tFinal >> tPlotDelta)) {
-         std::cerr << "Error: Failed to read simulation parameters.\n";
-         exit(1);
+        std::cerr << "Error: Failed to read simulation parameters.\n";
+        exit(1);
     }
     double rx, ry, rz, vx, vy, vz, m;   
         // Read 7 values from the file

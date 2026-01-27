@@ -10,8 +10,7 @@ public:
     double tFinal;
     double dt;
 
-    // SoA: Separate vectors for each component
-    // This replaces std::vector<Body> bodies;
+    // Separate vectors for each component
     std::vector<double> pos_x;
     std::vector<double> pos_y;
     std::vector<double> pos_z;
