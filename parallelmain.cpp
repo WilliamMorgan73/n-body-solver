@@ -3,6 +3,7 @@
 #include <vector>
 #include "NBodySimulation.h"
 #include "IO.h"
+#include <omp.h> 
 
 int main(int argc, char **argv)
 {
@@ -31,18 +32,23 @@ int main(int argc, char **argv)
     std::vector<double> forceZ(N, 0.0);
 
     // Collision Constant
-    const double C = 1e-2 / (double)N; // Need to tweak the tolerance in order to avoid missing collisions
+    const double C = 1e-2 / (double)N;
+
+    // Total time spent
+
+    double totalTime = 0.0;
 
     while (t < nbs.tFinal)
     {
-        // The reading of the input and writing of the output in IO.cpp may need to be modified if the data structures are
-        // Do not modify the input or output file format. It must remain the same! - Think I have already done that. Make sure to check
         t += nbs.dt;
 
         // Set force arrays to zero
         std::fill(forceX.begin(), forceX.end(), 0.0);
         std::fill(forceY.begin(), forceY.end(), 0.0);
         std::fill(forceZ.begin(), forceZ.end(), 0.0);
+
+        // Start timer
+        double startTime = omp_get_wtime();
 
         // Compute gravitational forces
         for (int i = 0; i < N; ++i)
@@ -57,18 +63,18 @@ int main(int argc, char **argv)
             double fy = 0.0;
             double fz = 0.0;
 
+            // Softening parameter to avoid singularities
+            const double epsilon = 1e-9;
+
             #pragma omp simd reduction(+:fx,fy,fz)
             for (int j = 0; j < N; ++j)
             {
-                // Skip interaction with self
-                if (i == j) continue;
-
                 double dx = nbs.pos_x[j] - xi;
                 double dy = nbs.pos_y[j] - yi;
                 double dz = nbs.pos_z[j] - zi;
 
-                double distSqr = dx * dx + dy * dy + dz * dz;
-
+                double distSqr = dx * dx + dy * dy + dz * dz + epsilon;
+                
                 // Inverse square root
                 double invDist = 1.0 / std::sqrt(distSqr);
                 double invDist3 = invDist * invDist * invDist;
@@ -84,6 +90,10 @@ int main(int argc, char **argv)
             forceY[i] = fy;
             forceZ[i] = fz;
         }
+
+        // Stop timer and accumulate time
+        double endTime = omp_get_wtime();
+        totalTime += (endTime - startTime);
 
         // Update velocities and positions
         for (int i = 0; i < N; ++i)
@@ -151,6 +161,8 @@ int main(int argc, char **argv)
 
                     // Decrease N
                     N--;
+                    // Decrement j to account for removed body
+                    j--;
                 }
                 else
                 {
@@ -168,9 +180,7 @@ int main(int argc, char **argv)
         }
     }
 
-    // Print final x position of the second body
-
-        std::cout << "Final position of body 1: (" << nbs.pos_x[1] << ", " << nbs.pos_y[1] << ", " << nbs.pos_z[1] << ")\n";
+    std::cout << "Total time spent on force calculations: " << totalTime << " seconds.\n";
 
     closePVDFile();
     std::cout << "Simulation completed.\n";
