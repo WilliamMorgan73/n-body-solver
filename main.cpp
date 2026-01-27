@@ -3,6 +3,7 @@
 #include <vector>
 #include "NBodySimulation.h"
 #include "IO.h"
+#include <chrono>
 
 int main(int argc, char **argv)
 {
@@ -33,6 +34,9 @@ int main(int argc, char **argv)
     // Collision Constant
     const double C = 1e-2 / (double)N; 
 
+    // Total time spent
+    double totalTime = 0.0;
+
     while (t < nbs.tFinal)
     {
         t += nbs.dt;
@@ -42,6 +46,8 @@ int main(int argc, char **argv)
         std::fill(forceY.begin(), forceY.end(), 0.0);
         std::fill(forceZ.begin(), forceZ.end(), 0.0);
 
+        // Start timer
+        auto startTime = std::chrono::high_resolution_clock::now();
         // Compute gravitational forces
         for (int i = 0; i < N; ++i)
         {
@@ -75,6 +81,11 @@ int main(int argc, char **argv)
             }
         }
 
+        // Stop timer and accumulate time
+        auto endTime = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = endTime - startTime;
+        totalTime += elapsed.count();
+        
         // Update velocities and positions
         for (int i = 0; i < N; ++i)
         {
@@ -159,6 +170,8 @@ int main(int argc, char **argv)
             nextPlotTime += nbs.tPlotDelta;
         }
     }
+
+    std::cout << "Total time spent on force calculations: " << totalTime << " seconds.\n";
 
     closePVDFile();
     std::cout << "Simulation completed.\n";
