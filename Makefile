@@ -23,3 +23,4 @@ clean:
 
 # For windows:
 # g++ -O3 -std=c++17 main.cpp NBodySimulation.cpp IO.cpp -o NBodySolver.exe
+# g++ -O3 -fopenmp -std=c++17 parallelmain.cpp NBodySimulation.cpp IO.cpp -o ParallelNBodySolver.exe
