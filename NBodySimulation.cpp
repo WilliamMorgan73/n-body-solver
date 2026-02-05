@@ -5,7 +5,7 @@
 
 // File Loading Constructor
 NBodySimulation::NBodySimulation(const std::string& filename)
-    : tPlotDelta(0.0), tFinal(0.0), dt(0.0) {
+    : dt(0.0), tFinal(0.0), tPlotDelta(0.0) {
     
     std::ifstream infile(filename);
     if (!infile) {
@@ -34,5 +34,5 @@ NBodySimulation::NBodySimulation(const std::string& filename)
         }
     
     std::cout << "Loaded " << pos_x.size() << " bodies from " << filename << "\n";
-    std::cout << "dt=" << dt << ", tFinal=" << tFinal << ", plotDelta=" << tPlotDelta << "\n";
+    std::cout << "plotDelta=" << tPlotDelta << ", tFinal=" << tFinal << ", dt=" << dt << "\n";
 }
