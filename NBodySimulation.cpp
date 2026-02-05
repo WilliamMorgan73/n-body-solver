@@ -14,7 +14,7 @@ NBodySimulation::NBodySimulation(const std::string& filename)
     }
 
     // Read simulation parameters
-    if (!(infile >> dt >> tFinal >> tPlotDelta)) {
+    if (!(infile >> tPlotDelta >> tFinal >> dt)) {
         std::cerr << "Error: Failed to read simulation parameters.\n";
         exit(1);
     }
