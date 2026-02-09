@@ -4,6 +4,7 @@
 #include "NBodySimulation.h"
 #include "IO.h"
 #include <chrono>
+#include <fstream>
 
 int main(int argc, char **argv)
 {
@@ -32,14 +33,22 @@ int main(int argc, char **argv)
     std::vector<double> forceZ(N, 0.0);
 
     // Collision Constant
-    const double C = 1e-2 / (double)N; 
+    const double C = 1e-2 / (double)N;
 
     // Total time spent
     double totalTime = 0.0;
 
+    // Testing
+    std::ofstream energyFile("energy_output.txt");
+    energyFile << "Time, Total Energy\n";
+
     while (t < nbs.tFinal)
     {
         t += nbs.dt;
+
+        // Reset energy
+        double kineticEnergy = 0.0;
+        double potentialEnergy = 0.0;
 
         // Set force arrays to zero
         std::fill(forceX.begin(), forceX.end(), 0.0);
@@ -51,6 +60,7 @@ int main(int argc, char **argv)
         // Compute gravitational forces
         for (int i = 0; i < N; ++i)
         {
+
             // Load body i data once
             double xi = nbs.pos_x[i];
             double yi = nbs.pos_y[i];
@@ -64,6 +74,8 @@ int main(int argc, char **argv)
                 double dz = nbs.pos_z[j] - zi;
 
                 double distSqr = dx * dx + dy * dy + dz * dz;
+
+                potentialEnergy -= (mi * nbs.mass[j]) / std::sqrt(distSqr);
 
                 // Inverse square root
                 double invDist = 1.0 / std::sqrt(distSqr);
@@ -85,7 +97,7 @@ int main(int argc, char **argv)
         auto endTime = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed = endTime - startTime;
         totalTime += elapsed.count();
-        
+
         // Update velocities and positions
         for (int i = 0; i < N; ++i)
         {
@@ -95,10 +107,17 @@ int main(int argc, char **argv)
             nbs.vel_y[i] += invMass * forceY[i];
             nbs.vel_z[i] += invMass * forceZ[i];
 
+            // Kinetic Energy
+            double v2 = nbs.vel_x[i] * nbs.vel_x[i] + nbs.vel_y[i] * nbs.vel_y[i] + nbs.vel_z[i] * nbs.vel_z[i];
+            kineticEnergy += 0.5 * nbs.mass[i] * v2;
+
             nbs.pos_x[i] += nbs.dt * nbs.vel_x[i];
             nbs.pos_y[i] += nbs.dt * nbs.vel_y[i];
             nbs.pos_z[i] += nbs.dt * nbs.vel_z[i];
         }
+
+        // Write energy to file
+        energyFile << t << ", " << kineticEnergy + potentialEnergy << "\n";
 
         // Handle collisions
         for (int i = 0; i < N; ++i)
@@ -171,6 +190,9 @@ int main(int argc, char **argv)
         }
     }
 
+    // Close energy file
+    energyFile.close();
+    
     std::cout << "Total time spent on force calculations: " << totalTime << " seconds.\n";
 
     closePVDFile();
